@@ -1,6 +1,6 @@
 # Sealman-IIoT-Platform
 
-This repository enables easily running all the Sealman projects, specially useful for local development.
+This repository enables easily running all the Sealman projects, especially useful for local development.
 
 ## Cloud Prerequisites 
 
