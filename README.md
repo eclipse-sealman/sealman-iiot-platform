@@ -83,7 +83,7 @@ To login in the services you can use the following user accounts created in the 
 ### 5. Stop Services
 
 ```shell
-docker-compose down
+docker compose down
 ```
 
 ### Data Persistence
