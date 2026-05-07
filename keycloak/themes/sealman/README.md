@@ -5,6 +5,6 @@ This theme is located in `keycloak/themes/sealman` and is mounted into the Keycl
 Important files:
 - `login/theme.properties` enables the theme and includes the CSS file.
 - `login/resources/css/styles.css` contains the complete visual styling.
-- `login/resources/img/sealman-logo.svg` is the currently integrated Sealman branding.
+- `login/resources/img/logo.png` is the currently integrated Sealman branding used by the CSS.
 
-If you want to use the exact PNG from the design, also place it at `keycloak/themes/sealman/login/resources/img/logo.png` and adjust the URL accordingly in the CSS file.
+If you want to use a different branding asset (for example, an SVG), place it in `keycloak/themes/sealman/login/resources/img/` and update the URL accordingly in the CSS file.
