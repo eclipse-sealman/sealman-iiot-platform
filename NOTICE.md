@@ -42,3 +42,11 @@ another country, of encryption software. BEFORE using any encryption software,
 please check the country's laws, regulations and policies concerning the import,
 possession, or use, and re-export of encryption software, to see if this is
 permitted.
+
+## Copyright © psycopg contributors
+- License: GNU Lesser General Public License v3.0 (LGPL 3.0)
+- Project homepage: https://www.psycopg.org/
+- Source code: https://github.com/psycopg/psycopg
+- This project uses psycopg as an unmodified external dependency. psycopg is distributed separately and is not statically linked or combined in a way that would prevent end users from replacing or modifying the library.
+
+

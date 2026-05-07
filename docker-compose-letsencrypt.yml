@@ -1,0 +1,46 @@
+# Letsencrypt override — use with:
+#   docker compose -f docker-compose.yml -f docker-compose-letsencrypt.yml up --pull always
+#
+# Merge rules:
+#   - command: replaced entirely (must repeat base values)
+#   - labels:  merged by key (only new labels needed)
+#   - volumes: appended
+
+services:
+
+  traefik:
+    # command is replaced, not merged — full list required
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+    volumes:
+      - letsencrypt:/letsencrypt
+
+  keycloak:
+    labels:
+      - "traefik.http.routers.keycloak.tls.certresolver=le"
+
+  sealman-app:
+    labels:
+      - "traefik.http.routers.frontend.tls.certresolver=le"
+
+  sealman-api:
+    labels:
+      - "traefik.http.routers.backend.tls.certresolver=le"
+
+  sealman-ems:
+    labels:
+      - "traefik.http.routers.${APPLICATION_NAME}.tls.certresolver=le"
+
+  postgres:
+    ports: !reset []
+
+volumes:
+  letsencrypt:

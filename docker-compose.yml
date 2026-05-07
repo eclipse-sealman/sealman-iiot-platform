@@ -1,0 +1,218 @@
+services:
+
+  traefik:
+    image: traefik:v3.6
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      sealman-net:
+        aliases:
+          - keycloak.${BASE_DOMAIN:-localhost}
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5
+    container_name: keycloak
+    command: 
+      - start-dev
+      - --import-realm
+      - --health-enabled=true
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: keycloak.${BASE_DOMAIN:-localhost}
+      KC_PROXY_HEADERS: xforwarded
+      KC_SPI_THEME_STATIC_MAX_AGE: -1
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./keycloak/themes:/opt/keycloak/themes
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.routers.keycloak.rule=Host(`keycloak.${BASE_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && cat <&3 | grep -q UP"]
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sealman-net
+
+  sealman-app:
+    image: eclipsesealman/sealman-app:latest
+    container_name: sealman-app
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.rule=Host(`app.${BASE_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+    environment:
+      VITE_API_URI: "https://api.${BASE_DOMAIN:-localhost}"
+      VITE_SEMS_API_URL: "https://sems.${BASE_DOMAIN:-localhost}"
+      VITE_KEYCLOAK_AUTHORITY: "https://keycloak.${BASE_DOMAIN:-localhost}/realms/local-dev"
+      VITE_ENTRA_ID_REDIRECT_URI: "https://app.${BASE_DOMAIN:-localhost}"
+    depends_on:
+      - sealman-api
+    networks:
+      - sealman-net
+
+  sealman-api:
+    image: eclipsesealman/sealman-api:latest
+    container_name: sealman-api
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.rule=Host(`api.${BASE_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.services.backend.loadbalancer.server.port=5000"
+    environment:
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://app.${BASE_DOMAIN:-localhost}"
+      KEYCLOAK_BASE_URL: "https://keycloak.${BASE_DOMAIN:-localhost}"
+      SEMS_DEVICE_URL: "https://sems.${BASE_DOMAIN:-localhost}"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      sealman-ems:
+        condition: service_started
+    networks:
+      - sealman-net
+
+  postgres:
+    image: postgres:17.5
+    container_name: postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - sealman-net
+  
+  sealman-ems:
+    container_name: "${APPLICATION_NAME}"
+    image: "${APPLICATION_REGISTRY_IMAGE}:${APPLICATION_VERSION}"
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - sealman-net
+    depends_on:
+      - "application-database"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "${APPLICATION_SYSLOG_ADDRESS}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${APPLICATION_NAME}.tls=true"
+      - "traefik.http.routers.${APPLICATION_NAME}.rule=Host(`sems.${BASE_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.${APPLICATION_NAME}.entrypoints=websecure"
+      - "traefik.http.services.${APPLICATION_NAME}.loadbalancer.server.port=80"
+    volumes:
+      - "application-volume-filestorage:/var/www/application/filestorage"
+      - "application-volume-archive:/var/www/application/archive"
+    environment:
+      APPLICATION_SESSION_TIMEOUT: ${APPLICATION_SESSION_TIMEOUT}
+      APPLICATION_UPPERCASE_FIRMWARE_VERSIONS: ${APPLICATION_UPPERCASE_FIRMWARE_VERSIONS}
+      APPLICATION_FEATURE_SCEP_ENABLED: ${APPLICATION_FEATURE_SCEP_ENABLED}
+      APPLICATION_FEATURE_VPN_ENABLED: ${APPLICATION_FEATURE_VPN_ENABLED}
+      APPLICATION_TRUSTED_PROXIES: ${APPLICATION_TRUSTED_PROXIES}
+      APPLICATION_TRUSTED_HEADERS: ${APPLICATION_TRUSTED_HEADERS}
+      APPLICATION_TRUSTED_HOSTS: '^(localhost|127\.0\.0\.1|sealman-ems|sems\\.${BASE_DOMAIN:-localhost})(:\d+)?$'
+      APPLICATION_SSL_CERTIFICATE_CERTBOT_DOMAINS: ${APPLICATION_SSL_CERTIFICATE_CERTBOT_DOMAINS}
+      APPLICATION_SSL_CERTIFICATE_CERTBOT_EMAIL: ${APPLICATION_SSL_CERTIFICATE_CERTBOT_EMAIL}
+      APPLICATION_SSL_CERTIFICATE_FILE_CHAIN: ${APPLICATION_SSL_CERTIFICATE_FILE_CHAIN}
+      APPLICATION_SSL_CERTIFICATE_FILE_KEY: ${APPLICATION_SSL_CERTIFICATE_FILE_KEY}
+      APPLICATION_DATABASE_URL: "mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@application-database:3306/${MYSQL_DATABASE}?serverVersion=mariadb-11.4.7&charset=utf8mb4"
+      APPLICATION_PHPFPM_PM_MAX_CHILDREN: "${APPLICATION_PHPFPM_PM_MAX_CHILDREN}"
+      APPLICATION_PHP_MAX_FILE_UPLOADS: "${APPLICATION_PHP_MAX_FILE_UPLOADS}"
+      APPLICATION_PHP_UPLOAD_MAX_FILESIZE: "${APPLICATION_PHP_UPLOAD_MAX_FILESIZE}"
+      APPLICATION_PHP_MEMORY_LIMIT: "${APPLICATION_PHP_MEMORY_LIMIT}"
+      APPLICATION_PHP_POST_MAX_SIZE: "${APPLICATION_PHP_POST_MAX_SIZE}"
+      APPLICATION_PHP_MAX_INPUT_TIME: "${APPLICATION_PHP_MAX_INPUT_TIME}"
+      APPLICATION_PHP_MAX_EXECUTION_TIME: "${APPLICATION_PHP_MAX_EXECUTION_TIME}"
+      APPLICATION_PHP_TIMEZONE: "${APPLICATION_PHP_TIMEZONE}"
+      APPLICATION_MYSQL_SSL_CA: "${APPLICATION_MYSQL_SSL_CA}"
+      APPLICATION_MYSQL_SERVER_VALIDATION: "${APPLICATION_MYSQL_SERVER_VALIDATION}"
+      APPLICATION_MYSQL_SSL_KEY: "${APPLICATION_MYSQL_SSL_KEY}"
+      APPLICATION_MYSQL_SSL_CERT: "${APPLICATION_MYSQL_SSL_CERT}"
+      APPLICATION_DISABLE_HTTPS_REDIRECT: "${APPLICATION_DISABLE_HTTPS_REDIRECT}"
+      APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_CREDENTIALS: "${APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_CREDENTIALS}"
+      APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_HEADERS: "${APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_HEADERS}"
+      APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_METHODS: "${APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_METHODS}"
+      APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN: "${APPLICATION_HEADER_ACCESS_CONTROL_ALLOW_ORIGIN}"
+      APPLICATION_HEADER_ACCESS_CONTROL_EXPOSE_HEADERS: "${APPLICATION_HEADER_ACCESS_CONTROL_EXPOSE_HEADERS}"
+      APPLICATION_HEADER_ACCESS_CONTROL_MAX_AGE: "${APPLICATION_HEADER_ACCESS_CONTROL_MAX_AGE}"
+      APPLICATION_HEADER_CONTENT_SECURITY_POLICY: "${APPLICATION_HEADER_CONTENT_SECURITY_POLICY}"
+      APPLICATION_HEADER_CROSS_ORIGIN_EMBEDDER_POLICY: "${APPLICATION_HEADER_CROSS_ORIGIN_EMBEDDER_POLICY}"
+      APPLICATION_HEADER_CROSS_ORIGIN_OPENER_POLICY: "${APPLICATION_HEADER_CROSS_ORIGIN_OPENER_POLICY}"
+      APPLICATION_HEADER_CROSS_ORIGIN_RESOURCE_POLICY: "${APPLICATION_HEADER_CROSS_ORIGIN_RESOURCE_POLICY}"
+      APPLICATION_HEADER_X_CONTENT_TYPE_OPTIONS: "${APPLICATION_HEADER_X_CONTENT_TYPE_OPTIONS}"
+      APPLICATION_HEADER_X_FRAME_OPTIONS: "${APPLICATION_HEADER_X_FRAME_OPTIONS}"
+      APPLICATION_HEADER_STRICT_TRANSPORT_SECURITY: "${APPLICATION_HEADER_STRICT_TRANSPORT_SECURITY}"
+      TZ: "${APPLICATION_TIMEZONE}"
+
+  application-database:
+    # container_name: "${APPLICATION_NAME}-database-${APPLICATION_VERSION}"
+    container_name: "${APPLICATION_NAME}-database"
+    image: mariadb:11.4.7
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - sealman-net
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      TZ: "${MYSQL_TIMEZONE}"
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "${MYSQL_SYSLOG_ADDRESS}"
+    volumes:
+      - "application-volume-database:/var/lib/mysql"
+
+volumes:
+  pg_data:
+    name: "sealman-volume-postgres"
+  application-volume-filestorage:
+    name: "${APPLICATION_NAME}-volume-filestorage"
+  application-volume-archive:
+    name: "${APPLICATION_NAME}-volume-archive"
+  application-volume-database:
+    name: "${APPLICATION_NAME}-volume-database-${APPLICATION_VERSION}"
+
+networks:
+  sealman-net:
+    driver: bridge

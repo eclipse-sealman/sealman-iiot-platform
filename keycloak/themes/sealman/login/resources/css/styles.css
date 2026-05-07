@@ -1,0 +1,286 @@
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(57, 120, 224, 0.18), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(77, 161, 255, 0.24), transparent 34%),
+    linear-gradient(180deg, #f8fbff 0%, #edf4ff 52%, #e3eeff 100%);
+  color: #173b73;
+}
+
+.login-pf,
+.login-pf body {
+  background: transparent;
+}
+
+.pf-c-login,
+.pf-c-login__container,
+.pf-c-login__main,
+.pf-c-login__main-header,
+.pf-c-login__main-body {
+  background: transparent;
+}
+
+.login-pf-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 18px;
+}
+
+.pf-c-login {
+  min-height: 100vh;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px;
+  padding: 48px 18px 32px !important;
+}
+
+.pf-c-login__container {
+  width: 100%;
+  max-width: 560px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  grid-template-columns: 1fr !important;
+}
+
+.pf-c-login__main {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto !important;
+}
+
+.login-pf-page::before {
+  content: "SEALMAN";
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4em;
+  color: rgba(23, 59, 115, 0.55);
+}
+
+#kc-content {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+#kc-content-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.card-pf,
+.pf-c-login__main,
+.login-pf-page .card-pf {
+  width: min(100%, 540px);
+  border: 1px solid rgba(37, 91, 170, 0.16);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 64px rgba(21, 61, 123, 0.14);
+}
+
+.card-pf {
+  padding: 36px 34px 30px;
+}
+
+#kc-header {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 18px;
+  display: flex;
+  justify-content: center;
+}
+
+#kc-header-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 0;
+  line-height: 0;
+}
+
+#kc-header-wrapper::before {
+  content: "";
+  display: block;
+  width: min(100%, 340px);
+  height: 240px;
+  margin: 0 auto;
+  background: url("../img/logo.png") center center / contain no-repeat;
+}
+
+#kc-header-wrapper::after {
+  content: "Scalable Edge Analytics in Manufacturing Industry";
+  display: block;
+  margin-top: 12px;
+  color: #4d648b;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+}
+
+#kc-page-title {
+  margin-bottom: 6px;
+  color: #143d7f;
+  font-size: 30px;
+  font-weight: 800;
+  text-align: center;
+}
+
+#kc-page-title + p,
+.instruction,
+.login-pf-page p,
+#kc-info,
+#kc-info-wrapper {
+  color: #4d648b;
+}
+
+label,
+.pf-c-form__label-text,
+.control-label {
+  color: #173b73;
+  font-weight: 700;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+.pf-c-form-control,
+.form-control {
+  height: 52px;
+  border: 1px solid #c2d7f4;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #173b73;
+  box-shadow: none;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+.pf-c-form-control:focus,
+.form-control:focus {
+  border-color: #4a8fff;
+  box-shadow: 0 0 0 4px rgba(74, 143, 255, 0.18);
+  background: #ffffff;
+}
+
+input::placeholder {
+  color: #7891b8;
+}
+
+#kc-form-options,
+.login-pf-page .checkbox,
+.pf-c-check,
+.pf-c-check__label,
+.checkbox {
+  color: #4d648b;
+}
+
+#kc-form-buttons {
+  margin-top: 24px;
+}
+
+#kc-login,
+.btn-primary,
+.pf-c-button.pf-m-primary {
+  height: 54px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #205bc9 0%, #4b9eff 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 14px 30px rgba(32, 91, 201, 0.2);
+}
+
+#kc-login:hover,
+.btn-primary:hover,
+.pf-c-button.pf-m-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+a {
+  color: #205bc9;
+  font-weight: 600;
+}
+
+a:hover {
+  color: #143d7f;
+}
+
+.alert,
+.pf-c-alert {
+  border-radius: 16px;
+}
+
+.alert-error,
+.pf-m-danger {
+  color: #8f1732;
+  background: #fff1f5;
+  border-color: #ffc7d4;
+}
+
+.alert-success,
+.pf-m-success {
+  color: #1a6b46;
+  background: #edfdf4;
+  border-color: #b7f0cf;
+}
+
+.login-pf-signup,
+#kc-registration {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e0ebfa;
+  color: #4d648b;
+}
+
+@media (max-width: 640px) {
+  .login-pf-page {
+    padding: 24px 12px;
+  }
+
+  .pf-c-login {
+    padding: 32px 12px 20px !important;
+  }
+
+  .login-pf-page::before {
+    top: 18px;
+    letter-spacing: 0.28em;
+  }
+
+  .card-pf {
+    padding: 26px 18px 22px;
+    border-radius: 24px;
+  }
+
+  #kc-header-wrapper::before {
+    width: min(100%, 260px);
+    height: 180px;
+  }
+
+  #kc-header-wrapper::after {
+    font-size: 12px;
+    margin-top: 10px;
+  }
+
+  #kc-page-title {
+    font-size: 26px;
+  }
+}
