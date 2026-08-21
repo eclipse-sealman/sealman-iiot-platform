@@ -9,6 +9,18 @@ Before starting the compose stack, an Azure IoT Hub instance must exist and prov
 - Environment variable `IOT_HUB_NAME` must be set with the IoT Hub host name (for example `my-hub.azure-devices.net`)
 - Environment variable `SAS_TOKEN` must be set with a valid IoT Hub SAS token (format: `SharedAccessSignature sr=...&sig=...&se=...`)
 
+### Automated Setup
+
+The steps below can be provisioned with Terraform instead, which also generates the SAS token and renders both variables. See [terraform/README.md](../../terraform/README.md).
+
+```shell
+cd terraform
+terraform init && terraform apply
+python3 scripts/gen-env.py
+```
+
+The manual steps below remain valid if you prefer to set this up by hand.
+
 ### Manual Setup
 
 1. Create an Azure IoT Hub (Standard tier)

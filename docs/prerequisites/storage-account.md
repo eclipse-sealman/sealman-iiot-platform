@@ -10,7 +10,23 @@ Both variables can however point at the same storage account.
 - Environment variable `PUBLIC_STORAGE_ACCOUNT_NAME` must be set with the name of the public Azure Storage Account used for device module twin configuration sharing (no suffix like `.blob.core.windows.net`).
 - Environment variable `INTERNAL_STORAGE_ACCOUNT_NAME` must be set with the name of the Azure Storage Account (no suffix like `.blob.core.windows.net`)
 - Environment variable `BLOB_SAS_TOKEN_PLATFORM_CONFIG` must be set with a SAS token that has read and write permissions to the container `platform-config` in the internal storage account.
-- Environment variable `BLOB_SAS_TOKEN_MODULE_CONF` must be set with a SAS token that has read and write permissions to the container `iotedge-device-twin` in the public storage account.## Manual Setup
+- Environment variable `BLOB_SAS_TOKEN_MODULE_CONF` must be set with a SAS token that has read and write permissions to the container `iotedge-device-twin` in the public storage account.
+
+## Automated Setup
+
+Terraform can create both storage accounts, both containers, the seed blobs and the SAS tokens, and render the four variables. See [terraform/README.md](../../terraform/README.md).
+
+```shell
+cd terraform
+terraform init && terraform apply
+python3 scripts/gen-env.py
+```
+
+Set `use_single_storage_account = true` to place both containers in one account.
+
+The manual steps below remain valid if you prefer to set this up by hand.
+
+## Manual Setup
 
 ### Internal Storage Account Setup
 Container: `platform-config` \
