@@ -1,0 +1,27 @@
+# Host-run app (Vite :3000) and API (uvicorn :5000)
+http:
+  routers:
+    frontend-dev:
+      rule: 'Host(`app.{{ env "BASE_DOMAIN" }}`)'
+      entryPoints:
+        - websecure
+      tls: {}
+      service: frontend-dev
+
+    backend-dev:
+      rule: 'Host(`api.{{ env "BASE_DOMAIN" }}`)'
+      entryPoints:
+        - websecure
+      tls: {}
+      service: backend-dev
+
+  services:
+    frontend-dev:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+
+    backend-dev:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5000"

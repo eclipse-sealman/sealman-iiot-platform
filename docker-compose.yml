@@ -9,11 +9,18 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+    environment:
+      BASE_DOMAIN: "${BASE_DOMAIN:-localhost}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
     networks:
       sealman-net:
         aliases:
@@ -51,51 +58,51 @@ services:
     networks:
       - sealman-net
 
-  sealman-app:
-    image: eclipsesealman/sealman-app:latest
-    container_name: sealman-app
-    env_file:
-      - .env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.tls=true"
-      - "traefik.http.routers.frontend.rule=Host(`app.${BASE_DOMAIN:-localhost}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
-    environment:
-      VITE_API_URI: "https://api.${BASE_DOMAIN:-localhost}"
-      VITE_SEMS_API_URL: "https://sems.${BASE_DOMAIN:-localhost}"
-      VITE_KEYCLOAK_AUTHORITY: "https://keycloak.${BASE_DOMAIN:-localhost}/realms/local-dev"
-      VITE_ENTRA_ID_REDIRECT_URI: "https://app.${BASE_DOMAIN:-localhost}"
-    depends_on:
-      - sealman-api
-    networks:
-      - sealman-net
+#  sealman-app:
+#    image: eclipsesealman/sealman-app:latest
+#    container_name: sealman-app
+#    env_file:
+#      - .env
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.frontend.tls=true"
+#      - "traefik.http.routers.frontend.rule=Host(`app.${BASE_DOMAIN:-localhost}`)"
+#      - "traefik.http.routers.frontend.entrypoints=websecure"
+#      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+#    environment:
+#      VITE_API_URI: "https://api.${BASE_DOMAIN:-localhost}"
+#      VITE_SEMS_API_URL: "https://sems.${BASE_DOMAIN:-localhost}"
+#      VITE_KEYCLOAK_AUTHORITY: "https://keycloak.${BASE_DOMAIN:-localhost}/realms/local-dev"
+#      VITE_ENTRA_ID_REDIRECT_URI: "https://app.${BASE_DOMAIN:-localhost}"
+#    depends_on:
+#      - sealman-api
+#    networks:
+#      - sealman-net
 
-  sealman-api:
-    image: eclipsesealman/sealman-api:latest
-    container_name: sealman-api
-    env_file:
-      - .env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.tls=true"
-      - "traefik.http.routers.backend.rule=Host(`api.${BASE_DOMAIN:-localhost}`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.services.backend.loadbalancer.server.port=5000"
-    environment:
-      CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://app.${BASE_DOMAIN:-localhost}"
-      KEYCLOAK_BASE_URL: "https://keycloak.${BASE_DOMAIN:-localhost}"
-      SEMS_DEVICE_URL: "https://sems.${BASE_DOMAIN:-localhost}"
-    depends_on:
-      keycloak:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      sealman-ems:
-        condition: service_started
-    networks:
-      - sealman-net
+#  sealman-api:
+#    image: eclipsesealman/sealman-api:latest
+#    container_name: sealman-api
+#    env_file:
+#      - .env
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.backend.tls=true"
+#      - "traefik.http.routers.backend.rule=Host(`api.${BASE_DOMAIN:-localhost}`)"
+#      - "traefik.http.routers.backend.entrypoints=websecure"
+#      - "traefik.http.services.backend.loadbalancer.server.port=5000"
+#    environment:
+#      CORS_ALLOWED_ORIGINS: "http://localhost:3000,https://app.${BASE_DOMAIN:-localhost}"
+#      KEYCLOAK_BASE_URL: "https://keycloak.${BASE_DOMAIN:-localhost}"
+#      SEMS_DEVICE_URL: "https://sems.${BASE_DOMAIN:-localhost}"
+#    depends_on:
+#      keycloak:
+#        condition: service_healthy
+#      postgres:
+#        condition: service_healthy
+#      sealman-ems:
+#        condition: service_started
+#    networks:
+#      - sealman-net
 
   postgres:
     image: postgres:17.5
