@@ -1,0 +1,25 @@
+# Copy to terraform.tfvars and adjust. All values have defaults; the file is optional.
+#
+#   cp terraform.tfvars.example terraform.tfvars
+
+# Falls back to ARM_SUBSCRIPTION_ID or the current `az account show` subscription.
+# subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# resource_group_name = "rg-sealman"
+# location            = "westeurope"
+# name_prefix         = "sealman"
+
+# The platform requires a Standard tier. F1 is free but limited to one per subscription.
+# iothub_sku      = "S1"
+# iothub_capacity = 1
+
+# Put both containers in one storage account (cheaper for local development).
+# use_single_storage_account = false
+
+# Lifetime of the generated blob container SAS tokens.
+# sas_validity_days = 90
+
+# tags = {
+#   project   = "sealman"
+#   managedBy = "terraform"
+# }
